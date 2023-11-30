@@ -1,65 +1,81 @@
-import { useState } from 'react'
-import './tailwind.css'
-import Button from './components/Button'
-import Tab from "./components/Tab"
+import {useReducer, useState, useMemo,useCallback } from "react";
+import Header from "./components/Header";
+import AddToDo from "./components/AddTodo";
+import Todos from "./components/Todos";
 
-function Profile() {
-  return (
-    <div>
-      burası profile tabı 
-    </div>
-  )
+function reducer(state, action){
+  switch (action.type) {
+    case 'SET_TODO':
+      return{
+        ...state,
+        todo: action.value
+      }
+    case 'ADD_TODO':
+      return{
+        ...state,
+        todo: '',
+        todos: [
+          ...state.todos,
+          action.todo
+        ]
+      }
+    case 'SET_SEARCH':
+      return {
+        ...state,
+        search:action.value
+      }
+  }
 }
 
 function App() {
-  const todos = ['todo1','todo2','todo3']
-  const style = {color:'red', backgroundColor:'yellow'}
 
-  const [activeTab, setActiveTab] = useState(1)
+  const [count,setCount] = useState(0)
+  const[state, dispatch] = useReducer(reducer, {
+    todos: [],
+    todo: '',
+    search: ''
+  })
+
+  const submitHandle = useCallback(e => {
+    e.preventDefault()
+    dispatch({
+      type: 'ADD_TODO',
+      todo: state.todo
+    })
+  }, [state.todo])
+
+  const onChange = useCallback(e=> {
+    dispatch({
+      type: 'SET_TODO',
+      value: e.target.value
+    })
+  }, [])
+
+  const searchHandle = e=> {
+    dispatch({
+      type:'SET_SEARCH',
+      value: e.target.value
+    })
+  }
+
+  const filteredTodos = useMemo(() => {
+    state.todos.filter(todo => todo.toLocaleLowerCase('TR').includes(state.search.toLocaleLowerCase('TR')))
+  },[state.todos, state.search]);
     return (
       
-    <main id="main" className="test">
-      <div style={{padding:20}}>
-        <button onClick={() => setActiveTab(2)}>
-          Aktif Tabı Değiştir
-        </button>
-      <Tab activeTab={activeTab} onChange={tabIndex =>setActiveTab(tabIndex)}>
-        <Tab.Panel title="Profil"><Profile /></Tab.Panel>
-        <Tab.Panel title="Hakkında">2. tab</Tab.Panel>
-        <Tab.Panel title="Ayarlar">3. tab</Tab.Panel>
-      </Tab>
-      {activeTab ===2 &&(
-        <div>
-          burası da ekstra bir alan!
-        </div>
-      )}
-      </div>
-      <div style={{padding: 20}}>
-      <Button>
-      buton örneği
-      </Button>
-      <Button variant="success">
-      buton örneği
-      </Button>
-      <Button variant="danger">
-      buton örneği
-      </Button>
-      <Button variant="warning">
-      buton örneği
-      </Button>
-     
-      </div>
-      <h1 tabIndex="3" style={style}>alparslan</h1>
-      <label htmlFor="search" tabIndex="2">Arama</label>
-      <input type="text" id="search" tabIndex="1" />
-      <ul>
-        {todos.map((todo, index) =>(
-          <li key={index}>
-            {todo}
-          </li>
-        ))}
-      </ul>
-    </main>
+    <>
+    <Header />
+      <h3>{count}</h3>
+      <button onClick= {() => setCount(count =>count +1)}>
+       Arttır
+      </button>
+      <hr />
+      <h1>Todo App</h1>
+      <input type="text" value={state.search} placeholder="todolarda ara" onChange={searchHandle} />
+      <hr />
+      <AddToDo onChange={onChange} submitHandle={submitHandle} todo={state.todo} />
+    <Todos todos={filteredTodos} />
+    </>
  );
 }
 
